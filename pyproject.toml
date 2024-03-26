@@ -1,0 +1,25 @@
+[project]
+name = "llm-cmd"
+version = "0.1"
+description = "Use LLM to generate and execute commands in your shell"
+readme = "README.md"
+authors = [{name = "Simon Willison"}]
+license = {text = "Apache-2.0"}
+classifiers = [
+    "License :: OSI Approved :: Apache Software License"
+]
+dependencies = [
+    "llm"
+]
+
+[project.urls]
+Homepage = "https://github.com/simonw/llm-cmd"
+Changelog = "https://github.com/simonw/llm-cmd/releases"
+Issues = "https://github.com/simonw/llm-cmd/issues"
+CI = "https://github.com/simonw/llm-cmd/actions"
+
+[project.entry-points.llm]
+cmd = "llm_cmd"
+
+[project.optional-dependencies]
+test = ["pytest"]
