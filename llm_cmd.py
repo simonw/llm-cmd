@@ -1,7 +1,11 @@
 import click
 import llm
-import readline
 import subprocess
+
+from prompt_toolkit.shortcuts import prompt
+from prompt_toolkit.lexers import PygmentsLexer
+from pygments.lexers.shell import BashLexer
+
 
 SYSTEM_PROMPT = """
 Return only the command to be executed as a raw string, no string delimiters
@@ -39,16 +43,15 @@ def register_commands(cli):
 
 
 def interactive_exec(command):
-    # Set the initial text for the input
-    readline.set_startup_hook(lambda: readline.insert_text(command))
+    if '\n' in command:
+        print("Multiline command - Meta-Enter or Esc Enter to execute")
+        edited_command = prompt("> ", default=command, lexer=PygmentsLexer(BashLexer), multiline=True)
+    else:
+        edited_command = prompt("> ", default=command, lexer=PygmentsLexer(BashLexer))
     try:
-        edited_command = input()
         output = subprocess.check_output(
             edited_command, shell=True, stderr=subprocess.STDOUT
         )
         print(output.decode())
     except subprocess.CalledProcessError as e:
-        print(f"Command failed with error: {e.output.decode()}")
-    finally:
-        # Remove the startup hook to avoid affecting future inputs
-        readline.set_startup_hook(None)
+        print(f"Command failed with error (exit status {e.returncode}): {e.output.decode()}")
