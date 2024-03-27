@@ -4,7 +4,14 @@ import subprocess
 
 from prompt_toolkit.shortcuts import prompt
 from prompt_toolkit.lexers import PygmentsLexer
-from pygments.lexers.shell import BashLexer
+from prompt_toolkit.styles.pygments import style_from_pygments_cls
+
+try:
+    from pygments.lexers.shell import BashLexer
+    from pygments.styles import get_style_by_name, get_all_styles
+    import pygments.util
+except ImportError:
+    BashLexer = get_style_by_name = get_all_styles = None
 
 
 SYSTEM_PROMPT = """
@@ -24,10 +31,26 @@ def register_commands(cli):
     @click.argument("args", nargs=-1)
     @click.option("-m", "--model", default=None, help="Specify the model to use")
     @click.option("-s", "--system", help="Custom system prompt")
+    @click.option("-H", "--highlight-style", default=None,
+                  help="Pygments highlight style, e.g. monokai")
     @click.option("--key", help="API key to use")
-    def cmd(args, model, system, key):
+    def cmd(args, model, system, key, highlight_style):
         """Generate and execute commands in your shell"""
         from llm.cli import get_default_model
+
+        style = None
+        if highlight_style is not None:
+            if get_style_by_name is None:
+                raise click.ClickException(
+                    "Pygments is not installed, cannot use --highlight-style"
+                )
+            try:
+                style = style_from_pygments_cls(get_style_by_name(highlight_style))
+            except (ModuleNotFoundError, pygments.util.ClassNotFound):
+                raise click.ClickException(
+                    f"Style {highlight_style} not found, available styles: "
+                    f"{list(get_all_styles())}"
+                )
 
         prompt = " ".join(args)
 
@@ -39,15 +62,23 @@ def register_commands(cli):
 
         result = model_obj.prompt(prompt, system=system or SYSTEM_PROMPT)
 
-        interactive_exec(str(result))
+        interactive_exec(str(result), style)
 
 
-def interactive_exec(command):
+def interactive_exec(command, style):
+    if style is None:
+        kwargs = {}
+    else:
+        kwargs = {
+            "style": style,
+            "lexer": PygmentsLexer(BashLexer),
+        }
     if '\n' in command:
         print("Multiline command - Meta-Enter or Esc Enter to execute")
-        edited_command = prompt("> ", default=command, lexer=PygmentsLexer(BashLexer), multiline=True)
-    else:
-        edited_command = prompt("> ", default=command, lexer=PygmentsLexer(BashLexer))
+        kwargs["multiline"] = True
+
+    edited_command = prompt("> ", default=command, **kwargs)
+
     try:
         output = subprocess.check_output(
             edited_command, shell=True, stderr=subprocess.STDOUT

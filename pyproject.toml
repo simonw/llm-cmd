@@ -11,7 +11,6 @@ classifiers = [
 dependencies = [
     "llm",
     "prompt_toolkit>=3.0.43",
-    "pygments>=2.17.2",
 ]
 
 [project.urls]
@@ -25,3 +24,4 @@ cmd = "llm_cmd"
 
 [project.optional-dependencies]
 test = ["pytest"]
+pygments = ["pygments>=2.17.2"]
