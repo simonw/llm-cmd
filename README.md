@@ -13,6 +13,12 @@ Install this plugin in the same environment as [LLM](https://llm.datasette.io/).
 ```bash
 llm install llm-cmd
 ```
+
+To get syntax highlighting, install with
+```bash
+llm install 'llm-cmd[pygments]'
+```
+
 ## Usage
 
 This command could be **very dangerous**. Do not use this unless you are confident you understand what it does and are sure you could spot if it is likely to do something dangerous.
@@ -27,6 +33,12 @@ It will use your [default model](https://llm.datasette.io/en/stable/setup.html#s
 This will then be displayed in your terminal ready for you to edit it, or hit `<enter>` to execute the prompt.
 
 If the command doesnt't look right, hit `Ctrl+C` to cancel.
+
+To enable syntax highlighting, use the `-H` flag with a Pygments style name, e.g.
+
+```bash
+llm cmd -H monokai find all files in subdirectories that have a corresponding tilde backup
+```
 
 ## The system prompt
 
