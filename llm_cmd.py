@@ -1,6 +1,7 @@
 import click
 import llm
 import subprocess
+import platform
 from prompt_toolkit import PromptSession
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.patch_stdout import patch_stdout
@@ -29,7 +30,11 @@ def register_commands(cli):
         model_obj = llm.get_model(model_id)
         if model_obj.needs_key:
             model_obj.key = llm.get_key(key, model_obj.needs_key, model_obj.key_env_var)
-        result = model_obj.prompt(prompt, system=system or SYSTEM_PROMPT)
+        _system_prompt = system
+        if not _system_prompt:
+            system_context = get_system_info()
+            system = f"{SYSTEM_PROMPT}{system_context}".strip()
+        result = model_obj.prompt(prompt, system=_system_prompt)
         interactive_exec(str(result))
 
 def interactive_exec(command):
@@ -47,3 +52,21 @@ def interactive_exec(command):
         print(output.decode())
     except subprocess.CalledProcessError as e:
         print(f"Command failed with error (exit status {e.returncode}): {e.output.decode()}")
+
+def get_system_info():
+    """Gathers system information using the platform module."""
+    try:
+        uname = platform.uname()
+        info = (
+            f"System: {uname.system}, "
+            f"Node Name: {uname.node}, "
+            f"Release: {uname.release}, "
+            f"Version: {uname.version}, "
+            f"Machine: {uname.machine}"
+        )
+        if uname.processor:
+            info = info + f", Processor: {uname.processor}"
+
+        return info
+    except Exception as e:
+        return ""
