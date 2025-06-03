@@ -21,7 +21,8 @@ def register_commands(cli):
     @click.option("-m", "--model", default=None, help="Specify the model to use")
     @click.option("-s", "--system", help="Custom system prompt")
     @click.option("--key", help="API key to use")
-    def cmd(args, model, system, key):
+    @click.option("-p", "--print-only", is_flag=True, help="Print command instead of putting in interactive prompt")
+    def cmd(args, model, system, key, print_only):
         """Generate and execute commands in your shell"""
         from llm.cli import get_default_model
         prompt = " ".join(args)
@@ -30,7 +31,10 @@ def register_commands(cli):
         if model_obj.needs_key:
             model_obj.key = llm.get_key(key, model_obj.needs_key, model_obj.key_env_var)
         result = model_obj.prompt(prompt, system=system or SYSTEM_PROMPT)
-        interactive_exec(str(result))
+        if print_only:
+            print(str(result).strip())
+        else:
+            interactive_exec(str(result))
 
 def interactive_exec(command):
     session = PromptSession(lexer=PygmentsLexer(BashLexer))
