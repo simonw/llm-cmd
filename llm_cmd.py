@@ -1,15 +1,18 @@
 import click
 import llm
 import subprocess
+import platform
 from prompt_toolkit import PromptSession
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.patch_stdout import patch_stdout
 from pygments.lexers.shell import BashLexer
 
-SYSTEM_PROMPT = """
+SYSTEM_PROMPT_TEMPLATE = """
 Return only the command to be executed as a raw string, no string delimiters
 wrapping it, no yapping, no markdown, no fenced code blocks, what you return
 will be passed to subprocess.check_output() directly.
+The user is running on {os_name}.
+Generate commands that are compatible with this operating system.
 For example, if the user asks: undo last git commit
 You return only: git reset --soft HEAD~1
 """.strip()
@@ -29,7 +32,13 @@ def register_commands(cli):
         model_obj = llm.get_model(model_id)
         if model_obj.needs_key:
             model_obj.key = llm.get_key(key, model_obj.needs_key, model_obj.key_env_var)
-        result = model_obj.prompt(prompt, system=system or SYSTEM_PROMPT)
+
+        if not system:
+            system_prompt = SYSTEM_PROMPT_TEMPLATE.format(os_name=platform.system())
+        else:
+            system_prompt = system
+
+        result = model_obj.prompt(prompt, system=system_prompt)
         interactive_exec(str(result))
 
 def interactive_exec(command):
