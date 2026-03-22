@@ -30,6 +30,7 @@ def register_commands(cli):
         if model_obj.needs_key:
             model_obj.key = llm.get_key(key, model_obj.needs_key, model_obj.key_env_var)
         result = model_obj.prompt(prompt, system=system or SYSTEM_PROMPT)
+        result = '\n'.join([i for i in str(result).splitlines() if not i.startswith('```')])
         interactive_exec(str(result))
 
 def interactive_exec(command):
