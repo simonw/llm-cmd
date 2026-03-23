@@ -1,6 +1,9 @@
 import click
 import llm
 import subprocess
+import os
+import sys
+import platform
 from prompt_toolkit import PromptSession
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.patch_stdout import patch_stdout
@@ -40,10 +43,13 @@ def interactive_exec(command):
             edited_command = session.prompt("> ", default=command, multiline=True)
         else:
             edited_command = session.prompt("> ", default=command)
-    try:
-        output = subprocess.check_output(
-            edited_command, shell=True, stderr=subprocess.STDOUT
-        )
-        print(output.decode())
-    except subprocess.CalledProcessError as e:
-        print(f"Command failed with error (exit status {e.returncode}): {e.output.decode()}")
+    if hasattr(sys.stdin, 'isatty') and sys.stdin.isatty():
+       os.system(edited_command)
+    else:
+        try:
+            output = subprocess.check_output(
+                edited_command, shell=True, stderr=subprocess.STDOUT
+            )
+            print(output.decode())
+        except subprocess.CalledProcessError as e:
+            print(f"Command failed with error (exit status {e.returncode}): {e.output.decode()}")
